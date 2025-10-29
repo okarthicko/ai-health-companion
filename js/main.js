@@ -6,7 +6,7 @@
 const healthResponses = {
     'headache': 'For headaches, try resting in a dark room, staying hydrated, and consider over-the-counter pain relief. If persistent, consult your doctor.',
     'fever': 'Monitor your temperature regularly. Stay hydrated, rest, and consider fever-reducing medication. Seek medical attention if fever exceeds 103°F (39.4°C).',
-    'cough': 'For dry coughs, try honey and warm liquids. If persistent or accompanied by other symptoms, please consult a healthcare professional.',
+    'cough': 'For dry coughs, try honey and warm liquids. If persistent, or accompanied by other symptoms, please consult a healthcare professional.',
     'stress': 'Try deep breathing exercises, meditation, or light exercise. Maintaining regular sleep and talking to someone can help manage stress.',
     'exercise': 'Regular exercise is great! Aim for 150 minutes of moderate activity weekly. Start slowly and gradually increase intensity.',
     'diet': 'A balanced diet with fruits, vegetables, lean proteins, and whole grains supports good health. Stay hydrated and limit processed foods.',
@@ -29,14 +29,12 @@ function addMessage(message, isUser = false) {
 function getAIResponse(userMessage) {
     const lowerMessage = userMessage.toLowerCase();
     
-    // Check for specific health topics
     for (const [keyword, response] of Object.entries(healthResponses)) {
         if (lowerMessage.includes(keyword)) {
             return response;
         }
     }
     
-    // General responses
     if (lowerMessage.includes('help') || lowerMessage.includes('what can you do')) {
         return 'I can help you track symptoms, provide health information, remind you about medications, and answer wellness questions. Try asking about specific symptoms or health topics!';
     }
@@ -45,7 +43,6 @@ function getAIResponse(userMessage) {
         return '🚨 For medical emergencies, call 911 immediately. I can help with general health information, but cannot replace emergency medical care.';
     }
     
-    // Default response
     return 'I understand you\'re asking about your health. While I can provide general information, please consult with a healthcare professional for personalized medical advice. Can you tell me more about your specific concern?';
 }
 
@@ -57,7 +54,6 @@ function sendMessage() {
         addMessage(message, true);
         input.value = '';
         
-        // Simulate AI thinking time
         setTimeout(() => {
             const response = getAIResponse(message);
             addMessage(response);
@@ -104,31 +100,48 @@ function emergencyContact() {
 //  Skin Scanner (New Feature)
 // ==========================================================
 function setupSkinScanner() {
-    const uploadBtn = document.getElementById('uploadBtn');
-    const fileInput = document.getElementById('skinImage');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const fileInput = document.getElementById('skinImage');
 
-    uploadBtn.addEventListener('click', () => {
-        if (!fileInput.files[0]) {
-            alert('Please upload a skin image first!');
-            return;
-        }
+  uploadBtn.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    if (!file) {
+      alert('Please upload a skin image first!');
+      return;
+    }
 
-        uploadBtn.innerText = 'Scanning...';
-        uploadBtn.disabled = true;
+    const formData = new FormData();
+    formData.append('image', file);
 
-        // Simulate a scanning process (fake AI result for demo)
-        setTimeout(() => {
-            const acne = Math.floor(Math.random() * 50) + 50; // 50–100%
-            const eczema = 100 - acne;
+    uploadBtn.innerText = 'Scanning...';
+    uploadBtn.disabled = true;
 
-            document.getElementById('acneScore').textContent = acne + '%';
-            document.getElementById('eczemaScore').textContent = eczema + '%';
-            document.getElementById('scanResult').style.display = 'block';
+    try {
+      // ⚠️ IMPORTANT: REPLACE THIS URL with your live Render URL
+      const response = await fetch('https://ai-health-companion-593l.onrender.com', {
+        method: 'POST',
+        body: formData
+      });
 
-            uploadBtn.innerText = 'Scan Now';
-            uploadBtn.disabled = false;
-        }, 1500);
-    });
+      const data = await response.json();
+
+      if (data.error) throw new Error(data.error);
+
+      // Get the result elements
+      const resultBox = document.getElementById('scanResult');
+      const predictionText = document.getElementById('predictionText');
+      
+      // Display the new, real prediction
+      predictionText.innerHTML = `<strong>${data.condition}</strong> (${data.probability}%)`;
+      resultBox.style.display = 'block';
+
+    } catch (err) {
+      alert('Error connecting to backend: ' + err.message);
+    }
+
+    uploadBtn.innerText = 'Scan Now';
+    uploadBtn.disabled = false;
+  });
 }
 
 // ==========================================================
@@ -136,7 +149,7 @@ function setupSkinScanner() {
 // ==========================================================
 function updateStats() {
     const steps = document.getElementById('steps');
-    if (!steps) return; // Prevents error if element not found
+    if (!steps) return;
     const currentSteps = parseInt(steps.textContent.replace(',', ''));
     steps.textContent = (currentSteps + Math.floor(Math.random() * 10)).toLocaleString();
 }
@@ -153,21 +166,3 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto update stats every 30 seconds
     setInterval(updateStats, 30000);
 });
-
-// ==========================================================
-//  Exports (for testing or modular usage)
-// ==========================================================
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        addMessage,
-        getAIResponse,
-        sendMessage,
-        handleKeyPress,
-        addSymptom,
-        addMedication,
-        scheduleAppointment,
-        emergencyContact,
-        updateStats,
-        setupSkinScanner
-    };
-}
