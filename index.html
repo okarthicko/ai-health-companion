@@ -316,8 +316,7 @@
       </div>
     </div>
 
-    <!-- 🩺 Skin Scanner Section -->
-    <div class="skin-scanner">
+    <div class="skin-scanner card"> {/* Added card class for consistency */}
       <h2>🩺 Skin Scanner</h2>
       <p>Upload a skin image to detect possible conditions.</p>
       <div class="upload-box">
@@ -327,21 +326,20 @@
 
       <div id="scanResult" class="result-box">
         <h3>Scan Results</h3>
-        <p><strong>Possible Acne:</strong> <span id="acneScore">--%</span></p>
-        <p><strong>Possible Eczema:</strong> <span id="eczemaScore">--%</span></p>
+        <p id="predictionText"></p> {/* Single p tag for prediction */}
       </div>
-    </div>
+      </div>
 
     <div class="card chat-card">
       <h2>🤖 AI Health Assistant</h2>
       <div class="chat-container">
         <div class="chat-messages" id="chatMessages">
           <div class="message ai-message">
-            <strong>AI Assistant:</strong> Hello! I'm your AI Health Companion. I can help you track symptoms, remind you about medications, provide health information, and answer your health-related questions. How can I assist you today?
+            <strong>AI Assistant:</strong> Hello! I'm your AI Health Companion. How can I assist you today?
           </div>
         </div>
         <div class="chat-input-container">
-          <input type="text" class="chat-input" id="chatInput" placeholder="Ask me about your health, symptoms, or wellness..." onkeypress="handleKeyPress(event)" />
+          <input type="text" class="chat-input" id="chatInput" placeholder="Ask me about your health..." onkeypress="handleKeyPress(event)" />
           <button class="send-btn" onclick="sendMessage()">Send</button>
         </div>
       </div>
@@ -351,22 +349,22 @@
       <div class="feature-card">
         <div class="feature-icon">🎯</div>
         <h3>Smart Tracking</h3>
-        <p>Monitor vital signs, symptoms, and daily health metrics with AI-powered insights</p>
+        <p>Monitor vital signs, symptoms, and daily health metrics.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">💊</div>
         <h3>Medication Reminders</h3>
-        <p>Never miss a dose with intelligent scheduling and personalized alerts</p>
+        <p>Never miss a dose with intelligent scheduling and alerts.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🧠</div>
         <h3>Health Insights</h3>
-        <p>Get personalized recommendations based on your health data and patterns</p>
+        <p>Get personalized recommendations based on your data.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🚨</div>
         <h3>Emergency Support</h3>
-        <p>Quick access to emergency contacts and critical health information</p>
+        <p>Quick access to emergency contacts and critical info.</p>
       </div>
     </div>
   </div>
@@ -444,36 +442,64 @@
       r.innerHTML = '🚨 Emergency Contact: John Doe (555-0123)';
     }
 
+    // --- THIS IS THE FIXED JAVASCRIPT ---
     // ---------------------- Skin Scanner ------------------------
-    document.getElementById('uploadBtn').addEventListener('click', () => {
-      const file = document.getElementById('skinImage').files[0];
+    document.getElementById('uploadBtn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('skinImage');
+      const file = fileInput.files[0];
       if (!file) {
         alert('Please upload a skin image first!');
         return;
       }
 
+      const formData = new FormData();
+      formData.append('image', file);
+
       const btn = document.getElementById('uploadBtn');
       btn.innerText = 'Scanning...';
       btn.disabled = true;
 
-      setTimeout(() => {
-        const acne = Math.floor(Math.random() * 50) + 50;
-        const eczema = 100 - acne;
-        document.getElementById('acneScore').textContent = acne + '%';
-        document.getElementById('eczemaScore').textContent = eczema + '%';
-        document.getElementById('scanResult').style.display = 'block';
-        btn.innerText = 'Scan Now';
-        btn.disabled = false;
-      }, 1500);
+      try {
+        // ⚠️ IMPORTANT: REPLACE THIS URL with your live Render URL
+        const response = await fetch('https://ai-health-companion.onrender.com/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error);
+
+        // Get the result elements
+        const resultBox = document.getElementById('scanResult');
+        const predictionText = document.getElementById('predictionText');
+        
+        // Display the new, real prediction
+        predictionText.innerHTML = `<strong>${data.condition}</strong> (${data.probability}%)`;
+        resultBox.style.display = 'block';
+
+      } catch (err) {
+        alert('Error connecting to backend: ' + err.message);
+      }
+
+      btn.innerText = 'Scan Now';
+      btn.disabled = false;
     });
+    // --- END OF FIX ---
+
 
     // ---------------------- Live Stats ------------------------
     function updateStats() {
       const steps = document.getElementById('steps');
+      if (!steps) return; // Added check for safety
       const current = parseInt(steps.textContent.replace(',', ''));
       steps.textContent = (current + Math.floor(Math.random() * 10)).toLocaleString();
     }
     setInterval(updateStats, 30000);
+
+    // Call setupSkinScanner on page load (if not using DOMContentLoaded)
+    // setupSkinScanner(); // No longer needed if using the event listener directly
+
   </script>
 </body>
 </html>
